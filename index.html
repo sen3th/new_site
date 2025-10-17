@@ -1,37 +1,491 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>.new</title>
+  <link rel="icon" type="image/png" href="/content/favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/content/favicon/favicon.svg" />
+  <link rel="shortcut icon" href="/content/favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/content/favicon/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="@seneth" />
+  <link rel="manifest" href="/content/favicon/site.webmanifest" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>@seneth</title>
+  <meta name="description" content="@seneth portfolio" />
   <style>
-    /* Reset default styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root{
+      --bg: #0f1113;            /* page background */
+      --card: #0b0d0f;          /* card / panel bg */
+      --text: #e6e8ea;          /* main text */
+      --muted: #9aa0a6;         /* secondary text */
+      --accent: #8bd3c7;        /* accent color */
+      --glass: rgba(255,255,255,0.03); /* subtle glass effect */
+      --radius: 12px;           /* corner radius */
+      --max-width: 900px;       /* content width */
+      --gap: 20px;              /* base spacing */
+      --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      --transition: 220ms cubic-bezier(.2,.9,.3,1);
+      --focus-ring: 3px solid rgba(139,211,199,0.12);
     }
 
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background-color: #f5f5f5;
-      color: #111;
-      text-align: center;
-      padding: 20px;
+    /* Light theme override (auto/dark handled in JS) */
+    :root.light {
+      --bg: #fafafa;
+      --card: #ffffff;
+      --text: #0b0c0d;
+      --muted: #50555a;
+      --glass: rgba(11,12,13,0.02);
+      --accent: #006d5b;
     }
 
-    p {
-      font-size: 2rem;
-      line-height: 1.5;
-      max-width: 600px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font-sans);
+      background:linear-gradient(180deg,var(--bg),color-mix(in srgb,var(--bg) 80%, black 10%));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:48px 20px;
+    }
+
+    /* Container */
+    .wrap{
+      width:100%;
+      max-width:var(--max-width);
+      margin-inline:auto;
+    }
+
+    /* Card */
+    .card{
+      background:linear-gradient(180deg,var(--card), color-mix(in srgb,var(--card) 92%, black 4%));
+      border-radius:var(--radius);
+      box-shadow:0 6px 28px rgba(2,6,10,0.45);
+      padding:calc(var(--gap) * 1.2);
+      backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    /* Top row: name + controls */
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: calc(var(--gap) * 0.6);
+    }
+
+    .name{
+      font-weight:700;
+      font-size:clamp(20px, 3.6vw, 28px);
+      letter-spacing: -0.02em;
+    }
+
+    .tagline{
+      color:var(--muted);
+      font-weight:500;
+      font-size:14px;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .btn{
+      background:transparent;
+      color:var(--muted);
+      border:1px solid transparent;
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:13px;
+      cursor:pointer;
+      transition:all var(--transition);
+    }
+
+    .btn:hover{ color:var(--text); transform:translateY(-1px) }
+    .theme-toggle{ border-radius:9px; background:var(--glass); padding:6px 8px; }
+
+    /* Layout */
+    .intro-grid{
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap:18px;
+      align-items:start;
+    }
+
+    @media (max-width:880px){
+      .intro-grid{ grid-template-columns:1fr; }
+      body{ padding:28px 14px }
+    }
+
+    /* Intro / About */
+    .about{
+      font-size:15px;
+      color:var(--muted);
+      padding:8px 4px;
+    }
+
+    /* Projects */
+    .projects{
+      display:grid;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:12px;
+    }
+
+    @media (max-width:520px){ .grid{ grid-template-columns:1fr } }
+
+    .project{
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+      border-radius:10px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,0.02);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      cursor:pointer;
+      transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .project:hover{
+      transform:translateY(-6px);
+      box-shadow:0 10px 30px rgba(2,6,10,0.45);
+      border-color: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+
+    .thumb{
+      width:56px;
+      height:40px;
+      background:linear-gradient(135deg,var(--glass), rgba(255,255,255,0.02));
+      border-radius:8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:var(--muted);
+      flex-shrink:0;
+      font-size:12px;
+    }
+
+    .pmeta{ display:flex; flex-direction:column; gap:4px; }
+    .ptitle{ font-weight:600; font-size:14px; color:var(--text) }
+    .psub{ font-size:13px; color:var(--muted) }
+
+    /* Right column: links */
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      padding:8px;
+    }
+
+    .links{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:14px;
+    }
+
+    .link{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:600;
+    }
+
+    /* Footer small */
+    .meta{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+      padding:36px;
+      z-index:60;
+      visibility:hidden;
+      opacity:0;
+      transition:opacity var(--transition);
+    }
+
+    .modal.open{ visibility:visible; opacity:1 }
+
+    .modal-card{
+      width:100%;
+      max-width:680px;
+      background:var(--card);
+      border-radius:12px;
+      padding:20px;
+      box-shadow:0 14px 40px rgba(2,6,10,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    .modal-close{
+      background:transparent;
+      border:0;
+      color:var(--muted);
+      font-size:14px;
+      cursor:pointer;
+      padding:8px;
+    }
+
+    /* tiny accessibility helpers */
+    .sr-only{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+    :focus{ outline-offset:3px; outline:var(--focus-ring) }
+    a:focus, button:focus{ outline:var(--focus-ring) }
+
+    /* Accent underline for links */
+    .underline{
+      background-image:linear-gradient(90deg,var(--accent),var(--accent));
+      background-repeat:no-repeat;
+      background-size:0 2px;
+      background-position:0 100%;
+      transition:background-size var(--transition);
+    }
+    .underline:hover{ background-size:100% 2px; color:var(--text) }
+
+    /* name animation */
+    .name{
+      background:linear-gradient(90deg, var(--accent), var(--text), var(--accent));
+      background-size:200% auto;
+      background-clip:text;
+      -webkit-background-clip:text;
+      color:transparent;
+      animation: shine 3s linear infinite;
     }
   </style>
 </head>
 <body>
-  <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean. A small river named Duden flows by their place and supplies it with the necessary regelialia.</p>
+  <main class="wrap" id="site">
+    <div class="card" role="region" aria-labelledby="heading">
+      <div class="top">
+        <div>
+          <div class="name" id="heading">Seneth</div>
+          <div class="tagline" id="tagline">Building quiet, thoughtful things?</div>
+        </div>
+
+        <div class="controls" aria-hidden="false">
+          <select id="themeSelect" class="btn theme-toggle" aria-label="Theme">
+            <option value="auto">Auto</option>
+            <option value="dark" selected>Dark</option>
+            <option value="light">Light</option>
+          </select>
+          <button id="accentBtn" class="btn" title="Cycle accent color">Accent</button>
+        </div>
+      </div>
+
+      <div class="intro-grid">
+        <section>
+          <p class="about" id="about">
+            I’m a student and creator based in Ottawa. I build things, tinker with design, and read Nietzsche when I should sleep. I like quiet things that behave the way you expect.
+          </p>
+
+          <div class="projects" aria-labelledby="projects-heading">
+            <h3 id="projects-heading" style="margin:0 0 8px 2px; font-size:13px; color:var(--muted); font-weight:600;">Selected projects</h3>
+            <div class="grid" id="projectsGrid" tabindex="0">
+            </div>
+          </div>
+
+          <div class="meta">
+            <div>© <span id="year"></span> Seneth</div>
+            <div style="color:var(--muted); font-size:13px;">built with care and small fonts.</div>
+          </div>
+        </section>
+
+        <aside class="side" aria-label="Contact and links">
+          <div class="links">
+            <a class="link underline" href="mailto:hi@seneth.me">hi@seneth.me</a>
+            <a class="link underline" href="https://github.com/sen3th" target="_blank" rel="noopener">GitHub</a>
+          </div>
+
+          <div style="color:var(--muted); font-size:13px; padding-top:6px;">
+            🇨🇦 • 💜 • ⚜️ • 🧙
+            <div style="margin-top:8px; color:var(--muted); font-size:13px;">
+              
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for project details -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" role="document">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div id="modalTitle" style="font-weight:700; font-size:16px;"></div>
+          <div id="modalTag" style="color:var(--muted); font-size:13px; margin-top:4px;"></div>
+        </div>
+        <div>
+          <button id="modalClose" class="modal-close" aria-label="Close">Close</button>
+        </div>
+      </div>
+
+      <div id="modalBody" style="margin-top:12px; color:var(--muted); font-size:14px;"></div>
+
+      <div style="margin-top:18px; display:flex; gap:10px; justify-content:flex-end;">
+        <a id="modalLink" class="btn" href="#" target="_blank" rel="noopener" style="color:var(--accent); font-weight:700; background:transparent; border:0;">Open</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* 
+       Project List
+    */
+    const projects = [
+      {
+        title: "SubSpace",
+        tag: "Subscription tracker",
+        desc: "Simple and clean subscription tracker.",
+        url: "https://ss.seneth.me"
+      },
+      {
+        title: "T0RCL",
+        tag: "HTML experiment",
+        desc: "Minimal text-driven experiment exploring typography and playful URLs.",
+        url: "https://seneth.me/t0rcl"
+      },
+    ];
+
+    /* === utility + initial render === */
+    const grid = document.getElementById('projectsGrid');
+    const yearEl = document.getElementById('year');
+    yearEl.textContent = new Date().getFullYear();
+
+    function makeThumbText(title){
+      return title.split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase() || '').join('');
+    }
+
+    function openModal(p){
+      const modal = document.getElementById('modal');
+      document.getElementById('modalTitle').textContent = p.title;
+      document.getElementById('modalTag').textContent = p.tag || '';
+      document.getElementById('modalBody').textContent = p.desc || '';
+      const link = document.getElementById('modalLink');
+      if(p.url){ link.href = p.url; link.style.display = 'inline-block'; } else { link.style.display='none' }
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+      modal.focus();
+    }
+
+    function closeModal(){
+      const modal = document.getElementById('modal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+    }
+
+    function renderProjects(){
+      grid.innerHTML = '';
+      projects.forEach((p, i) => {
+        const el = document.createElement('button');
+        el.className = 'project';
+        el.type = 'button';
+        el.setAttribute('aria-label', `${p.title} — ${p.tag}`);
+        el.addEventListener('click', () => openModal(p));
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        thumb.textContent = makeThumbText(p.title);
+
+        const meta = document.createElement('div');
+        meta.className = 'pmeta';
+        meta.innerHTML = `<div class="ptitle">${p.title}</div><div class="psub">${p.tag} · <span style="color:var(--muted); font-weight:500">${p.url ? 'Live' : 'Prototype'}</span></div>`;
+
+        el.appendChild(thumb);
+        el.appendChild(meta);
+        grid.appendChild(el);
+      });
+    }
+
+    renderProjects();
+
+    /* === modal close handling === */
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if(e.target === e.currentTarget) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape') closeModal();
+    });
+
+    /* === theme handling === */
+    const themeSelect = document.getElementById('themeSelect');
+    const root = document.documentElement;
+
+    function applyTheme(choice){
+      root.classList.remove('light');
+      if(choice === 'light') root.classList.add('light');
+      if(choice === 'auto'){
+        const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        if(prefers) root.classList.add('light');
+      }
+      // persist
+      try{ localStorage.setItem('site-theme', choice) }catch(e){}
+    }
+
+    // init theme from storage
+    try{
+      const stored = localStorage.getItem('site-theme') || 'dark';
+      themeSelect.value = stored;
+      applyTheme(stored);
+    }catch(e){
+      applyTheme('dark');
+    }
+
+    themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+
+    // react to system changes when on auto
+    if(window.matchMedia){
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+        if(themeSelect.value === 'auto') applyTheme('auto');
+      });
+    }
+
+    /* quick accent cycler */
+    const accents = [
+      '#8bd3c7', // mint (default)
+      '#b38ff0', // lavender
+      '#ffb86b', // warm amber
+      '#6ab3ff', // cool blue
+      '#9be57d'  // soft green
+    ];
+    let accentIndex = 0;
+    const accentBtn = document.getElementById('accentBtn');
+    accentBtn.addEventListener('click', () => {
+      accentIndex = (accentIndex + 1) % accents.length;
+      document.documentElement.style.setProperty('--accent', accents[accentIndex]);
+    });
+
+    // keyboard focus for grid 
+    grid.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        const first = projects[0];
+        if(first) openModal(first);
+      }
+    });
+
+
+  </script>
 </body>
 </html>
