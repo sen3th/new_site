@@ -111,6 +111,44 @@
     .btn:hover{ color:var(--text); transform:translateY(-1px) }
     .theme-toggle{ border-radius:9px; background:var(--glass); padding:6px 8px; }
 
+    /* Custom theme selector styles */
+    .theme-selector{ position:relative; display:inline-block }
+    .theme-button{ display:inline-flex; align-items:center; gap:8px; min-width:120px; justify-content:space-between }
+    .theme-label-prefix{ color:var(--muted); font-weight:600; margin-right:6px }
+    .theme-label{ font-weight:700 }
+    .theme-menu{
+      position:absolute;
+      right:0;
+      top:calc(100% + 8px);
+      background:var(--card);
+      border-radius:10px;
+      padding:6px;
+      box-shadow:0 8px 28px rgba(2,6,10,0.45);
+      border:1px solid rgba(255,255,255,0.03);
+      display:none;
+      z-index:40;
+      min-width:140px;
+    }
+    .theme-menu.open{ display:block }
+    .theme-item{
+      display:block;
+      width:100%;
+      text-align:left;
+      padding:8px 10px;
+      background:transparent;
+      border:0;
+      color:var(--text);
+      font-size:14px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .theme-item:hover, .theme-item[aria-selected="true"]{ background: color-mix(in srgb, var(--accent) 8%, transparent); color:var(--text) }
+    .theme-item:focus{ outline:var(--focus-ring); }
+
+    /* Don't show the focus ring on mouse click for this control; show on keyboard focus */
+    .theme-button:focus{ outline: none; }
+    .theme-button:focus-visible{ outline:var(--focus-ring); outline-offset:3px; }
+
     /* Layout */
     .intro-grid{
       display:grid;
@@ -151,18 +189,35 @@
       gap:12px;
     }
 
+    /* Visual aid: show the projects area and a message when empty (debug/fallback) */
+    .grid{ min-height:80px; border-radius:8px }
+    .grid:empty::before{
+      content: "No projects available (JS may have failed to render).";
+      color:var(--muted);
+      display:block;
+      padding:12px;
+      font-size:13px;
+    }
+
     @media (max-width:520px){ .grid{ grid-template-columns:1fr } }
+
+    @media (max-width:520px){
+      .ptitle, .psub{ white-space:normal; overflow:visible; text-overflow:clip }
+      .project{ min-height:auto; padding:10px }
+      .thumb{ width:48px; height:36px }
+    }
 
     .project{
       background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
       border-radius:10px;
-      padding:12px;
+      padding:12px 14px;
       border:1px solid rgba(255,255,255,0.02);
       display:flex;
-      gap:12px;
+      gap:14px;
       align-items:center;
       cursor:pointer;
       transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      min-height:72px; /* consistent card height */
     }
 
     .project:hover{
@@ -173,7 +228,7 @@
 
     .thumb{
       width:56px;
-      height:40px;
+      height:56px;
       background:linear-gradient(135deg,var(--glass), rgba(255,255,255,0.02));
       border-radius:8px;
       display:flex;
@@ -185,9 +240,9 @@
       font-size:12px;
     }
 
-    .pmeta{ display:flex; flex-direction:column; gap:4px; }
-    .ptitle{ font-weight:600; font-size:14px; color:var(--text) }
-    .psub{ font-size:13px; color:var(--muted) }
+    .pmeta{ display:flex; flex-direction:column; gap:4px; justify-content:center; flex:1 }
+    .ptitle{ font-weight:600; font-size:15px; color:var(--text); margin:0; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .psub{ font-size:13px; color:var(--muted); margin:0; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 
     /* Right column: links */
     .side{
@@ -291,11 +346,18 @@
         </div>
 
         <div class="controls" aria-hidden="false">
-          <select id="themeSelect" class="btn theme-toggle" aria-label="Theme">
-            <option value="auto">Auto</option>
-            <option value="dark" selected>Dark</option>
-            <option value="light">Light</option>
-          </select>
+          <!-- Custom accessible theme selector (replaces native select) -->
+          <div id="themeSelector" class="theme-selector" aria-haspopup="listbox" aria-expanded="false">
+            <button type="button" class="btn theme-button" aria-label="Theme (follows system preference)" aria-controls="themeMenu">
+              <span class="theme-label-prefix">Theme:</span>
+              <span class="theme-label">Auto (system)</span>
+            </button>
+            <div id="themeMenu" class="theme-menu" role="listbox" tabindex="-1">
+              <button class="theme-item" role="option" data-value="auto">Auto (system)</button>
+              <button class="theme-item" role="option" data-value="dark">Dark</button>
+              <button class="theme-item" role="option" data-value="light">Light</button>
+            </div>
+          </div>
           <button id="accentBtn" class="btn" title="Cycle accent color">Accent</button>
         </div>
       </div>
@@ -444,7 +506,21 @@
       });
     }
 
-    renderProjects();
+    // Safety: capture runtime errors and show them in the projects grid
+    window.addEventListener('error', (evt) => {
+      try{
+        const g = document.getElementById('projectsGrid');
+        if(g) g.innerHTML = `<div style="color:var(--muted); padding:12px;">JS Error: ${String(evt.error || evt.message)}</div>`;
+      }catch(e){}
+    });
+
+    try{
+      renderProjects();
+    }catch(err){
+      const g = document.getElementById('projectsGrid');
+      if(g) g.innerHTML = `<div style="color:var(--muted); padding:12px;">Render error: ${String(err)}</div>`;
+      console.error(err);
+    }
 
     /* === modal close handling === */
     document.getElementById('modalClose').addEventListener('click', closeModal);
@@ -455,9 +531,13 @@
       if(e.key === 'Escape') closeModal();
     });
 
-    /* === theme handling === */
-    const themeSelect = document.getElementById('themeSelect');
+    /* === theme handling (custom selector) === */
     const root = document.documentElement;
+    const themeSelector = document.getElementById('themeSelector');
+    const themeButton = themeSelector.querySelector('.theme-button');
+    const themeMenu = document.getElementById('themeMenu');
+    const themeItems = Array.from(themeMenu.querySelectorAll('.theme-item'));
+    const themeLabel = themeSelector.querySelector('.theme-label');
 
     function applyTheme(choice){
       root.classList.remove('light');
@@ -468,23 +548,78 @@
       }
       // persist
       try{ localStorage.setItem('site-theme', choice) }catch(e){}
+      // update UI state
+      themeItems.forEach(item => {
+        const v = item.getAttribute('data-value');
+        const selected = v === choice;
+        item.setAttribute('aria-selected', selected ? 'true' : 'false');
+      });
+      const current = themeItems.find(i => i.getAttribute('data-value') === choice) || themeItems[0];
+      themeLabel.textContent = current ? current.textContent : choice;
     }
 
-    // init theme from storage
+    // toggle menu
+    function openMenu(){
+      themeMenu.classList.add('open');
+      themeSelector.setAttribute('aria-expanded','true');
+      // focus the menu so keyboard users can navigate immediately
+      themeMenu.focus();
+    }
+
+    // closeMenu: if focusButton is true, return keyboard focus to the button; otherwise blur it (used after mouse interactions)
+    function closeMenu(focusButton = false){
+      themeMenu.classList.remove('open');
+      themeSelector.setAttribute('aria-expanded','false');
+      if(focusButton) themeButton.focus(); else themeButton.blur();
+    }
+
+    // init
     try{
       const stored = localStorage.getItem('site-theme') || 'dark';
-      themeSelect.value = stored;
       applyTheme(stored);
-    }catch(e){
-      applyTheme('dark');
-    }
+    }catch(e){ applyTheme('dark'); }
 
-    themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+    // clicks on button toggle menu
+    themeButton.addEventListener('click', (e) => {
+      const open = themeMenu.classList.contains('open');
+      if(open) closeMenu(); else openMenu();
+    });
+
+    // click an item
+    themeItems.forEach(it => {
+      it.addEventListener('click', (e) => {
+        const v = it.getAttribute('data-value');
+        applyTheme(v);
+        // user clicked an item with mouse: close and remove button focus so outline doesn't persist
+        closeMenu(false);
+      });
+      it.addEventListener('keydown', (e) => {
+        const idx = themeItems.indexOf(it);
+        if(e.key === 'ArrowDown') { e.preventDefault(); const next = themeItems[(idx+1)%themeItems.length]; next.focus(); }
+        if(e.key === 'ArrowUp') { e.preventDefault(); const prev = themeItems[(idx-1+themeItems.length)%themeItems.length]; prev.focus(); }
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); it.click(); }
+        if(e.key === 'Escape') { e.preventDefault(); closeMenu(true); }
+      });
+    });
+
+    // keyboard while closed (open with ArrowDown/Enter/Space)
+    themeButton.addEventListener('keydown', (e) => {
+      if(e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMenu(); const sel = themeMenu.querySelector('[aria-selected="true"]') || themeItems[0]; sel.focus(); }
+      if(e.key === 'Escape') { closeMenu(true); }
+    });
+
+    // close when clicking outside
+    document.addEventListener('click', (e) => {
+      if(!themeSelector.contains(e.target)) closeMenu(false);
+    });
 
     // react to system changes when on auto
     if(window.matchMedia){
       window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-        if(themeSelect.value === 'auto') applyTheme('auto');
+        try{
+          const stored = localStorage.getItem('site-theme') || 'auto';
+          if(stored === 'auto') applyTheme('auto');
+        }catch(e){}
       });
     }
 
