@@ -121,7 +121,13 @@
 
     @media (max-width:880px){
       .intro-grid{ grid-template-columns:1fr; }
-      body{ padding:28px 14px }
+      body{
+        /* move content to top on small screens so the top isn't clipped on mobile */
+        align-items:flex-start;
+        padding:28px 14px;
+        /* include iOS safe-area inset so content isn't hidden under the notch */
+        padding-top: calc(28px + env(safe-area-inset-top));
+      }
     }
 
 
